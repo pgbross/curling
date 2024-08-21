@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "es2022",
+    "resolveJsonModule": true,
+    "paths": {
+      "~/*": ["./client/*"]
+    }
+  },
+  "include": []
+}

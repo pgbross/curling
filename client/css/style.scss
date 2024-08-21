@@ -1,0 +1,23 @@
+*,
+::before,
+::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --app-color: #f4f4f4;
+}
+
+html {
+  text-size-adjust: 100%;
+  height: 100%;
+  width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  height: 100%;
+  background-color: #f4f4f4;
+}

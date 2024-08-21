@@ -1,0 +1,21 @@
+{
+  "include": [
+    "client/**/*",
+    "srv/**/*",
+    "globals.d.ts",
+    "srv/types/types.d.ts"
+  ],
+  "exclude": ["node_modules", "*.html", "srv/server.js"],
+  "compilerOptions": {
+    "checkJs": true,
+    "resolveJsonModule": true,
+    "baseUrl": "./client",
+    "paths": {
+      "~/*": ["*"],
+      "onc": ["@ounce/onc"]
+    },
+    "moduleResolution": "node",
+    "module": "es2020",
+    "target": "es2022"
+  }
+}
