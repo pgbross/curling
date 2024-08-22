@@ -7,6 +7,90 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 
+/**
+ * @type {{[key:string]: {name: string, years:{[year: string]:{teams:string[]}}}}}
+ */
+const data = {
+  indoor: {
+    name: 'Indoor Bonspiel',
+    years: {
+      2024: {
+        teams: [
+          'AWW',
+          'Banchory',
+          'Caterthun',
+          'Dun',
+          'Evenie Water',
+          'Fettercairn',
+          'Letham Grange',
+          'Forfar 1',
+          'Fotheringham 1',
+          'Kirriemuir',
+          'Suttieside',
+          'Broughty ferry',
+          'Lundie & Auchterhouse',
+          'Panmure',
+          'Pitkerro',
+          'University of Dundee',
+        ],
+      },
+    },
+  },
+  interprovince: { name: 'Inter Province', years: { 2024: { teams: [] } } },
+  grant: {
+    name: 'Grant Trophy',
+    years: {
+      2024: {
+        teams: [
+          'AWW',
+          'Banchory',
+          'Caterthun',
+          'Dalhousie',
+          'Dun',
+          'Edzell',
+          'Evenie Water',
+          'Letham Grange',
+          'Forfar 1',
+          'Fotheringham 1',
+          'Kirriemuir',
+          'Suttieside',
+          'Broughty ferry',
+          'Claverhouse',
+          'Pitkerro',
+          'University of Dundee',
+        ],
+      },
+    },
+  },
+  crichton1: {
+    name: 'Crichton Tankard (N)',
+    years: {
+      2024: { teams: ['AWW', 'Caterthun', 'Evenie Water', 'Letham Grange'] },
+    },
+  },
+  crichton2: {
+    name: 'Crichton Tankard (S)',
+    years: {
+      2024: {
+        teams: [
+          'Forfar 1',
+          'Forfar 2',
+          'Fotheringham 1',
+          'Fotheringham 2',
+          'Kirriemuir',
+          'Suttieside',
+          'Balruddery',
+          'Claverhouse',
+          'Dundee',
+          'Lundie & Auchterhouse',
+          'Pitkerro',
+          'University of Dundee',
+        ],
+      },
+    },
+  },
+};
+
 class Shuffle extends LitElement {
   @property()
   accessor wiffle = false;
@@ -16,8 +100,10 @@ class Shuffle extends LitElement {
 
   @query('#team-input') accessor teamInput;
 
-  @state() accessor teams = ['Test', 'Letham Grange', 'Kirriemuir', 'Forfar'];
-  @state() accessor team = '';
+  /**
+   * @type {{[key:string]: {name: string, years:{[year: string]:{teams:string[]}}}}}
+   */
+  @state() accessor data = data;
 
   @state() accessor count = 0;
 
@@ -26,6 +112,12 @@ class Shuffle extends LitElement {
   }
 
   duration = 500;
+
+  willUpdate(changed) {
+    if (changed.has('data')) {
+      this.checkData();
+    }
+  }
 
   render() {
     return html`<div class="main-wrapper">
@@ -79,6 +171,27 @@ class Shuffle extends LitElement {
 
       <div class="footer">&copy; Curling ~ 2024</div>
     </div> `;
+  }
+
+  checkData() {
+    const years = new Set();
+    const teams = new Set();
+    const competitions = new Set();
+
+    for (const [key, competition] of Object.entries(this.data)) {
+      competitions.add(key);
+
+      for (const [year, item] of Object.entries(competition.years)) {
+        years.add(year);
+
+        for (const team of item.teams) {
+          teams.add(team);
+        }
+      }
+    }
+    this.years = years;
+    this.teams = teams;
+    this.competitions = competitions;
   }
 
   onShuffle() {

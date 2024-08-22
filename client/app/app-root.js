@@ -14,18 +14,10 @@ export class AppRoot extends LitElement {
 
     const routes = [
       {
-        path: '/',
-        render: () => html`<app-home></app-home>`,
+        path: '/*',
+        render: () => html`<home-root></home-root>`,
         enter: async () => {
-          await import('../home/home.js');
-          return true;
-        },
-      },
-      {
-        path: '/shuffle',
-        render: () => html`<team-shuffle></team-shuffle>`,
-        enter: async () => {
-          await import('~/team/team-shuffle.js');
+          await import('../home/home-root.js');
           return true;
         },
       },

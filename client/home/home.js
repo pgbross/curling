@@ -1,22 +1,19 @@
-import { consume } from '@lit/context';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { routerContext } from '~/app/contexts';
+import { WithRouter } from '~/app/with-context.js';
 
 /**
  * @typedef {import('~/app/contexts.js').RouterController} RouterController
  */
 
-class Home extends LitElement {
+const HomeBaseClass = WithRouter(LitElement, true);
+
+class Home extends HomeBaseClass {
   @property()
   accessor wiffle = false;
 
   @state()
   accessor oomph = false;
-
-  /** @type {RouterController} */
-  @consume({ context: routerContext, subscribe: true })
-  accessor router;
 
   constructor() {
     super();
