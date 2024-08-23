@@ -590,9 +590,7 @@ export class TeamShuffle extends Shuffle {
     .main-wrapper {
       display: flex;
       flex-direction: column;
-
-      height: 100vh;
-
+      height: calc(100vh - 100px);
       margin-top: 1em;
     }
 
@@ -607,6 +605,7 @@ export class TeamShuffle extends Shuffle {
 
     .form-controls {
       display: flex;
+      padding: 0px 10px;
     }
     .form-inputs {
       font-family: sans-serif;
@@ -632,6 +631,7 @@ export class TeamShuffle extends Shuffle {
       gap: 10px;
       margin-top: 10px;
       margin-bottom: 10px;
+      padding: 0px 10px;
     }
 
     .team-list {
