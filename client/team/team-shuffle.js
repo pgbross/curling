@@ -83,7 +83,7 @@ const data = {
       2024: { teams: ['AWW', 'Caterthun', 'Evenie Water', 'Letham Grange'] },
     },
   },
-  'Crichton Tankard (S)': {
+  'Crichton Tankard (Angus)': {
     years: {
       2024: {
         teams: [
@@ -93,6 +93,14 @@ const data = {
           'Fotheringham 2',
           'Kirriemuir',
           'Suttieside',
+        ],
+      },
+    },
+  },
+  'Crichton Tankard (Dundee)': {
+    years: {
+      2024: {
+        teams: [
           'Balruddery',
           'Claverhouse',
           'Dundee',
@@ -212,6 +220,15 @@ class Shuffle extends LitElement {
                 @input=${this.onYear}
               ></md-filled-text-field>
             </div>
+          </div>
+          <div>
+            <md-text-button
+              ><md-icon slot="icon">upload</md-icon>Import data</md-text-button
+            >
+            <md-text-button
+              ><md-icon slot="icon">download</md-icon>Export
+              data</md-text-button
+            >
           </div>
 
           <md-divider></md-divider>
