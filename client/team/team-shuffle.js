@@ -1,13 +1,20 @@
 import { animate, fadeIn, flyBelow } from '@lit-labs/motion';
 import '@material/web/button/filled-button.js';
+import '@material/web/button/text-button.js';
 import '@material/web/divider/divider.js';
 import '@material/web/select/outlined-select.js';
 import '@material/web/select/select-option.js';
 import '@material/web/textfield/filled-text-field.js';
 import { shuffle } from '@ounce/onc';
+import { saveAs } from 'file-saver';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
+import '~/components/mini-uploader.js';
+
+const onChoose = ({ target }) => {
+  target.nextElementSibling?.show();
+};
 
 /**
  * @type {{[key:string]: { years:{[year: string]:{teams:string[]}}}}}
@@ -120,7 +127,11 @@ class Shuffle extends LitElement {
   @state()
   accessor oomph = false;
 
-  @query('#team-input') accessor teamInput;
+  @query('#competition-input') accessor selectCompetition;
+
+  @query('#year-input') accessor selectYear;
+
+  @query('#team-input') accessor selectTeam;
 
   /**
    * @type {{[key:string]: { years:{[year: string]:{teams:string[]}}}}}
@@ -136,11 +147,41 @@ class Shuffle extends LitElement {
 
   @state() accessor team = '';
 
+  @state() accessor showNewCompetition = false;
+  @state() accessor showNewYear = false;
+  @state() accessor showNewTeam = false;
+
+  @state() accessor years;
+
   constructor() {
     super();
+
+    this.competition = '';
+    this.year = '';
   }
 
   duration = 500;
+
+  checkData() {
+    const years = new Set();
+    const teams = new Set();
+    const competitions = new Set();
+
+    for (const [key, competition] of Object.entries(this.data)) {
+      competitions.add(key);
+
+      for (const [year, item] of Object.entries(competition.years)) {
+        years.add(year);
+
+        for (const team of item.teams) {
+          teams.add(team);
+        }
+      }
+    }
+    this.years = years;
+    this.teams = teams;
+    this.competitions = competitions;
+  }
 
   willUpdate(changed) {
     if (changed.has('data')) {
@@ -150,51 +191,54 @@ class Shuffle extends LitElement {
     if (changed.has('currentYear') || changed.has('currentCompetition')) {
       const competition = this.data[this.currentCompetition];
 
-      const yearInfo = competition?.years[this.currentYear];
+      const yearInfo =
+        competition?.years[this.currentYear] ??
+        (competition.years[this.currentYear] = { teams: [] });
 
-      if (yearInfo) {
-        this.currentTeams = yearInfo.teams;
-      }
+      this.currentTeams = yearInfo.teams;
     }
   }
 
   render() {
+    const competitions = [...this.competitions.values()];
+
     return html`<div class="main-wrapper">
       <!-- <div class="intro">Team shuffle</div> -->
 
       <div class="main">
-        <div class="form-inputs">
+        <div class="form-controls">
           <div class="selector-wrapper">
             <div class="competition-select">
               <md-outlined-select
                 type="string"
+                id="competition-input"
                 class="pager-rows-per-page-select"
                 @change=${this.onCompetitionChange}
                 label="Competition"
               >
-                ${[...this.competitions.values()].map(
-                  name => html`
-                    <md-select-option
-                      value="${name}"
-                      ?selected=${name === this.currentCompetition}
-                    >
-                      <span slot="headline">${name}</span>
-                    </md-select-option>
-                  `,
+                ${repeat(
+                  competitions,
+                  comp => comp,
+                  comp => {
+                    return html`
+                      <md-select-option
+                        value="${comp}"
+                        ?selected=${comp === this.currentCompetition}
+                      >
+                        <span slot="headline">${comp}</span>
+                      </md-select-option>
+                    `;
+                  },
                 )}
               </md-outlined-select>
 
-              <md-filled-text-field
-                id="team-input"
-                .value=${this.currentCompetition}
-                label="New competition"
-                @input=${this.onCompetition}
-              ></md-filled-text-field>
+              ${this.renderCompetitionChoice()}
             </div>
 
             <div class="competition-select">
               <md-outlined-select
                 type="string"
+                id="year-input"
                 ?disabled=${!this.currentCompetition}
                 class="pager-rows-per-page-select"
                 @change=${this.onYearChange}
@@ -212,30 +256,32 @@ class Shuffle extends LitElement {
                 )}
               </md-outlined-select>
 
-              <md-filled-text-field
-                id="year-input"
-                ?disabled=${!this.currentCompetition}
-                .value=${this.currentYear}
-                label="New year"
-                @input=${this.onYear}
-              ></md-filled-text-field>
+              ${this.renderYearChoice()}
             </div>
           </div>
+
           <div>
-            <md-text-button
+            <md-text-button @click=${onChoose}
               ><md-icon slot="icon">upload</md-icon>Import data</md-text-button
             >
-            <md-text-button
+            <mini-uploader
+              @upload=${this.onUpload}
+              accept="*.json"
+            ></mini-uploader>
+            <md-text-button @click=${this.onExport}
               ><md-icon slot="icon">download</md-icon>Export
               data</md-text-button
             >
           </div>
+        </div>
 
-          <md-divider></md-divider>
+        <md-divider></md-divider>
 
+        <div class="team-selector">
           <div class="competition-select">
             <md-outlined-select
               type="string"
+              id="team-input"
               ?disabled=${!this.currentYear}
               class="pager-rows-per-page-select"
               @change=${this.onTeamChange}
@@ -252,20 +298,8 @@ class Shuffle extends LitElement {
                 )}
             </md-outlined-select>
 
-            <md-filled-text-field
-              id="year-input"
-              ?disabled=${!this.currentYear}
-              .value=${this.team}
-              label="New team"
-              @input=${this.onTeam}
-            ></md-filled-text-field>
+            ${this.renderTeamChoice()}
           </div>
-
-          <md-filled-button
-            @click=${this.onAddTeam}
-            ?disabled=${!this.team || this.currentTeams.includes(this.team)}
-            >Add Team</md-filled-button
-          >
         </div>
 
         <md-divider></md-divider>
@@ -313,25 +347,113 @@ class Shuffle extends LitElement {
     </div> `;
   }
 
-  checkData() {
-    const years = new Set();
-    const teams = new Set();
-    const competitions = new Set();
+  renderCompetitionChoice() {
+    return html`${this.renderAddCompetition()} ${this.renderNewCompetition()}`;
+  }
 
-    for (const [key, competition] of Object.entries(this.data)) {
-      competitions.add(key);
-
-      for (const [year, item] of Object.entries(competition.years)) {
-        years.add(year);
-
-        for (const team of item.teams) {
-          teams.add(team);
-        }
-      }
+  renderAddCompetition() {
+    if (!this.showNewCompetition) {
+      return html`
+        <md-text-button @click=${() => (this.showNewCompetition = true)}
+          >Add Competition</md-text-button
+        >
+      `;
     }
-    this.years = years;
-    this.teams = teams;
-    this.competitions = competitions;
+  }
+
+  renderNewCompetition() {
+    if (this.showNewCompetition) {
+      return html` <div>
+        <md-filled-text-field
+          .value=${this.competition}
+          label="New competition"
+        ></md-filled-text-field>
+
+        <md-filled-button icon="save_alt" @click=${this.onCompetition}
+          >Save</md-filled-button
+        >
+
+        <md-text-button @click=${() => (this.showNewCompetition = false)}
+          >Cancel</md-text-button
+        >
+      </div>`;
+    }
+  }
+
+  renderYearChoice() {
+    return html`${this.renderAddYear()} ${this.renderNewYear()}`;
+  }
+
+  renderAddYear() {
+    if (!this.showNewYear) {
+      return html`
+        <md-text-button @click=${() => (this.showNewYear = true)}
+          >Add Year</md-text-button
+        >
+      `;
+    }
+  }
+
+  renderNewYear() {
+    if (this.showNewYear) {
+      return html` <div>
+        <md-filled-text-field
+          id="year-input"
+          .value=${this.year}
+          label="New year"
+        ></md-filled-text-field>
+
+        <md-filled-button icon="save_alt" @click=${this.onYear}
+          >Save</md-filled-button
+        >
+
+        <md-text-button @click=${() => (this.showNewYear = false)}
+          >Cancel</md-text-button
+        >
+      </div>`;
+    }
+  }
+
+  renderTeamChoice() {
+    return html`${this.renderAddTeam()} ${this.renderNewTeam()}`;
+  }
+
+  renderAddTeam() {
+    if (!this.showNewTeam) {
+      return html`
+        <md-text-button
+          ?disabled=${!this.currentYear}
+          @click=${() => (this.showNewTeam = true)}
+          >Add team</md-text-button
+        >
+
+        <md-filled-button
+          @click=${this.onAddTeam}
+          ?disabled=${!this.team || this.currentTeams.includes(this.team)}
+          >Select Team</md-filled-button
+        >
+      `;
+    }
+  }
+
+  renderNewTeam() {
+    if (this.showNewTeam) {
+      return html` <div>
+        <md-filled-text-field
+          id="team-input"
+          .value=${this.team}
+          label="New team"
+        ></md-filled-text-field>
+
+        <md-filled-button icon="save_alt" @click=${this.onTeam}
+          >Add team</md-filled-button
+        >
+
+        <md-text-button @click=${() => (this.showNewTeam = false)}
+          >Cancel</md-text-button
+        >
+      </div>`;
+    }
   }
 
   onShuffle() {
@@ -347,8 +469,25 @@ class Shuffle extends LitElement {
     this.team = '';
   }
 
-  onTeam({ target: { value } }) {
-    this.team = value;
+  /**
+   *
+   * @param {Event&{target: Element&{previousElementSibling:{value:string}} }} param0
+   */
+  async onTeam({ target }) {
+    const value = target.previousElementSibling?.value;
+
+    if (!this.currentTeams.includes(value)) {
+      this.data[this.currentCompetition].years[this.currentYear].teams.push(
+        value,
+      );
+      this.checkData();
+    }
+
+    this.showNewTeam = false;
+
+    await this.updateComplete;
+
+    this.selectTeam.select(value);
   }
 
   onTeamChange({ target: { value } }) {
@@ -359,16 +498,89 @@ class Shuffle extends LitElement {
     this.currentCompetition = value;
   }
 
-  onCompetition({ target: { value } }) {
+  /**
+   *
+   * @param {Event&{target: Element&{previousElementSibling:{value:string}} }} param0
+   */
+  async onCompetition({ target }) {
+    const value = target.previousElementSibling?.value;
     this.currentCompetition = value;
+    if (!this.competitions.has(value)) {
+      this.data[value] = { years: {} };
+      this.checkData();
+    }
+
+    this.showNewCompetition = false;
+
+    await this.updateComplete;
+
+    this.selectCompetition.select(this.currentCompetition);
   }
 
-  onYear({ target: { value } }) {
+  /**
+   *
+   * @param {Event&{target: Element&{previousElementSibling:{value:string}} }} param0
+   */
+  async onYear({ target }) {
+    const value = target.previousElementSibling?.value;
+
+    if (!this.years.has(value)) {
+      this.data[this.currentCompetition].years[value] = { teams: [] };
+      this.checkData();
+    }
+
     this.currentYear = value;
+
+    this.showNewYear = false;
+
+    await this.updateComplete;
+
+    this.selectYear.select(this.currentYear);
   }
 
   onYearChange({ target: { value } }) {
     this.currentYear = value;
+  }
+
+  onExport() {
+    this.data[this.currentCompetition].years[this.currentYear].teams =
+      this.currentTeams;
+
+    const exportData = JSON.stringify(this.data, null, 2);
+    const file = new File([exportData], `team-data.json`, {
+      type: 'text/plain;charset=utf-8',
+    });
+
+    saveAs(file);
+  }
+
+  /**
+   * @param {{ result: any; replace?: any; }} options
+   */
+  async handleFile(options) {
+    const { result } = options;
+    try {
+      const data = JSON.parse(result.data);
+
+      this.data = data;
+      this.currentCompetition = Object.keys(data)[0];
+      this.currentYear = Object.keys(
+        this.data[this.currentCompetition].years,
+      )[0];
+      this.currentTeams = [];
+      this.checkData();
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async onUpload({ detail: { result } }) {
+    if (!result || !(result.data && result.file)) {
+      // return showErrors(result.message || result);
+      console.log(result.message || result);
+    }
+
+    return this.handleFile({ result });
   }
 }
 
@@ -393,6 +605,9 @@ export class TeamShuffle extends Shuffle {
       background: #ccc;
     }
 
+    .form-controls {
+      display: flex;
+    }
     .form-inputs {
       font-family: sans-serif;
       margin-block-end: 16px;
@@ -402,6 +617,21 @@ export class TeamShuffle extends Shuffle {
 
       width: 70%;
       margin-bottom: 1em;
+    }
+
+    .selector-wrapper {
+      display: grid;
+      grid-template-columns: 1fr;
+      column-gap: 10px;
+      row-gap: 10px;
+      margin-bottom: 1em;
+    }
+
+    .team-selector {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 10px;
     }
 
     .team-list {
@@ -436,12 +666,6 @@ export class TeamShuffle extends Shuffle {
     .competition-select {
       display: flex;
       gap: 10px;
-    }
-
-    .selector-wrapper {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      column-gap: 10px;
     }
 
     .list-actions {
