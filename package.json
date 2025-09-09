@@ -1,6 +1,6 @@
 {
   "name": "curling-web",
-  "version": "24.8.2",
+  "version": "25.9.1",
   "description": "curling website",
   "product-name": "curling",
   "exports": "./srv/server.js",
@@ -14,102 +14,26 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "wireit",
-    "build:docker": "wireit",
-    "dependencies": "wireit",
-    "debug": "wireit",
-    "serve": "wireit",
-    "serveX": "wireit",
+    "build:curling": "npm run cpodman-build",
+    "image:curling": "npm run cpodman-image",
+    "curling": "npm run cpodman-run",
+    "build": "npm run cbuild",
+    "develop": "npm run cdevelop",
+    "debug": "npm run cdebug",
+    "serve": "npm run cserve",
+    "serveX": "npm run cserveX",
     "start": "npm run serve --watch",
     "startX": "npm run serveX --watch",
-    "publish": "wireit",
-    "changelog": "wireit",
-    "version": "wireit",
-    "postinstall": "husky install || true",
-    "test": "wireit",
-    "jest": "wireit",
-    "prepare": "husky || true"
-  },
-  "wireit": {
-    "debug": {
-      "command": "node --import ./srv/register-hooks.js ./srv/server.js",
-      "service": true
-    },
-    "serveX": {
-      "command": "node --import ./srv/register-hooks.js ./srv/server.js ",
-      "service": true,
-      "files": [
-        "srv/**/*.js"
-      ],
-      "dependencies": [
-        "develop"
-      ]
-    },
-    "serve": {
-      "command": "node --import ./srv/register-hooks.js   ./srv/server.js | pino-toke  -a 1 :status :method :url - :response-time ms | pino-pretty -c ",
-      "service": true,
-      "files": [
-        "srv/**/*.js"
-      ],
-      "dependencies": [
-        "develop"
-      ]
-    },
-    "dependencies": {
-      "command": "cat package.json | jq -S '.| with_entries(select (.key as $k | [\"dependencies\", \"devDependencies\"] | index($k)))' > package-dependencies.json"
-    },
-    "develop": {
-      "service": true,
-      "command": "node --experimental-import-meta-resolve ./build.js --sourcemap=true --minify=false --target=es2022 --watch"
-    },
-    "build:docker": {
-      "command": "docker build -t audito:latest .",
-      "dependencies": [
-        "build"
-      ]
-    },
-    "build": {
-      "command": "node --experimental-import-meta-resolve ./build.js --sourcemap=external --minify=true --sw --target=es2022 --target=es2018",
-      "output": [
-        "build/client/**"
-      ]
-    },
-    "version": {
-      "command": "npm run publish",
-      "dependencies": [
-        "build:git"
-      ]
-    },
-    "build:git": {
-      "command": "git push && git push --tags",
-      "dependencies": [
-        "build"
-      ]
-    },
-    "publish": {
-      "command": "cpy --cwd='.' './srv/' './build/' './static/' '!./build/client/evergreen/package.json' '!./static/media/**/*' '!./static/media-library/**/*' '!./static/locales/**/*' ../srv-deploy",
-      "dependencies": [
-        "publish:package"
-      ]
-    },
-    "publish:package": {
-      "command": "cpy --cwd='./build/client/evergreen' 'package.json'  ../../../../srv-deploy/",
-      "dependencies": [
-        "clean"
-      ]
-    },
-    "clean": {
-      "command": "del  -f ../srv-deploy/*"
-    },
-    "test": {
-      "command": "cross-env BABEL_ENV=test jest --require @babel/register"
-    },
-    "jest": {
-      "command": "NODE_ENV=test jest --runInBand"
-    },
-    "changelog": {
-      "command": "standard-changelog -i CHANGELOG.md -k package.json -w"
-    }
+    "changelog": "standard-changelog -i CHANGELOG.md -k package.json -w",
+    "version": "npm_config_allow_same_version=true npm run build",
+    "cbuild": "node --experimental-import-meta-resolve ./build.js --sourcemap=external --minify=true --sw --target=es2022",
+    "cdevelop": "node --experimental-import-meta-resolve ./build.js --sourcemap=true --minify=false --target=es2022 --watch",
+    "cserve": "node --import ./srv/register-hooks.js   ./srv/server.js | pino-toke  -a 1 :status :method :url - :response-time ms | pino-pretty -c ",
+    "cserveX": "node --import ./srv/register-hooks.js ./srv/server.js",
+    "cdebug": "node --import ./srv/register-hooks.js ./srv/server.js",
+    "cpodman-build": "podman build -t curling:dev .",
+    "cpodman-image": "podman image save curling:dev  --format  oci-archive --output  curling-dev-oci.tar",
+    "cpodman-run": "podman run -p 2344:2300 -v ./config:/app/config:Z --user 1000 --userns=keep-id --replace --name curling curling:dev"
   },
   "repository": {
     "private": true
@@ -226,43 +150,6 @@
     "extends": [
       "@commitlint/config-conventional"
     ]
-  },
-  "browserslist": {
-    "defaults": [
-      "last 2 versions",
-      "Safari >= 11",
-      "iOS >= 11",
-      "not ie <= 10",
-      "> 1%"
-    ],
-    "evergreen": [
-      "last 2 Chrome versions",
-      "Chrome >= 94",
-      "last 2 ChromeAndroid versions",
-      "last 2 Firefox versions",
-      "last 2 FirefoxAndroid versions",
-      "last 2 Safari versions",
-      "iOS >= 12.2",
-      "last 2 Edge versions",
-      "last 2 Opera versions"
-    ]
-  },
-  "jest": {
-    "coverageDirectory": "./coverage/",
-    "moduleFileExtensions": [
-      "mjs",
-      "js"
-    ],
-    "testMatch": [
-      "**/test/**/*-test.(js|mjs)"
-    ],
-    "transform": {
-      "^.+\\.m?js$": "babel-jest"
-    },
-    "setupFilesAfterEnv": [
-      "<rootDir>/srv/test/common.mjs"
-    ],
-    "testEnvironment": "node"
   },
   "eslintConfig": {
     "extends": [

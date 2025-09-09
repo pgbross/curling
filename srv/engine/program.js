@@ -1,31 +1,16 @@
-import fs from 'node:fs';
-import process from 'node:process';
+import serverConfig from 'config';
 import util from 'node:util';
-import { ServerConfig } from './config/server-config.js';
 import { initLogger, logger } from './logger.js';
 import { ServerController } from './server-controller.js';
 
 export class Program {
   async init() {
     try {
-      this.serverConfig = await new ServerConfig().config();
-
-      const {
-        helmet,
-        cors,
-        logLevel = 'info',
-        pidFile,
-        db,
-      } = this.serverConfig;
+      // @ts-ignore
+      const { helmet, cors, logLevel = 'info' } = serverConfig;
 
       // create a logger for non-http middleware
       initLogger({ level: logLevel });
-
-      if (pidFile) {
-        fs.writeFileSync(pidFile, String(process.pid));
-      }
-
-      // const databaseConfig = clone(db);
 
       this.fastify = await ServerController.createServer({
         helmet,
@@ -53,12 +38,8 @@ export class Program {
   }
 
   startServer() {
-    const { PORT: port, SSLPORT: sslPort, listenOn } = this.serverConfig;
-    ServerController.startServer(this.fastify, {
-      port,
-      sslPort,
-      listenOn,
-    });
+    const { PORT: port, SSLPORT: sslPort, listenOn } = serverConfig;
+    ServerController.startServer(this.fastify, { port, sslPort, listenOn });
   }
 
   async shutdown() {
@@ -67,26 +48,4 @@ export class Program {
       logger.info('server is stopping');
     });
   }
-}
-
-// ===
-// Private functions
-// ===
-
-function clone(o) {
-  return typeof o === 'object' && o !== null // only clone objects
-    ? // eslint-disable-next-line unicorn/no-nested-ternary
-      Array.isArray(o) // if cloning an array
-      ? o.map(element => clone(element)) // clone each of its elements
-      : cloneAll(o)
-    : o;
-}
-
-function cloneAll(o) {
-  const ca = {};
-
-  for (const key of Object.keys(o)) {
-    ca[key] = clone(o[key]);
-  }
-  return ca;
 }

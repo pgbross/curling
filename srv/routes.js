@@ -1,18 +1,10 @@
 import fastifyAccepts from '@fastify/accepts';
-import appRoot from 'app-root-path';
 import serverConfig from 'config';
 import fileUpload from 'fastify-file-upload';
 import middie from 'middie';
 import fs from 'node:fs';
-import { readFile as fsReadFile } from 'node:fs/promises';
 import path from 'node:path';
-// import { auth, databasePlugin } from './api/index.js';
-// import { MyUsers } from './db-user.js';
 import { logger } from './engine/logger.js';
-// import rbacPlugin from './rbac-middle.js';
-// import { roles } from './roles.js';
-// import apiRoutes from './routes-api.js';
-// import { handleLogin, sessionRegister } from './session.js';
 import { staticRoutes } from './static-routes.js';
 
 /**
@@ -27,10 +19,6 @@ const {
 } = serverConfig;
 const cleanupName_ = path.resolve(STATIC_PATH, 'cleanup.html');
 
-async function getRole(request) {
-  return request.user && request.user.role;
-}
-
 /**
  *
  * @param {FastifyInstance} fastify
@@ -43,11 +31,6 @@ export const routes = async function (fastify, options = {}, next) {
   logger.debug('routes: start');
 
   await fastify.register(fastifyAccepts);
-
-  const secret = await fsReadFile(
-    path.join(appRoot.path, 'config/secret-key'),
-    'utf-8',
-  );
 
   await fastify.register(middie);
   await fastify.register(fileUpload);
