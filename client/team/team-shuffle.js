@@ -42,6 +42,26 @@ const data = {
           'University of Dundee',
         ],
       },
+      2025: {
+        teams: [
+          'AWW',
+          'Banchory',
+          'Caterthun',
+          'Dalhousie',
+          'Dun',
+          'Evenie Water',
+          'Fettercairn',
+          'Forfar 1',
+          'Fotheringham 1',
+          'Kirriemuir',
+          'Suttieside',
+          'Broughty ferry',
+          'Lundie & Auchterhouse',
+          'Pitkerro',
+          'University of Dundee',
+          'a.n.other',
+        ],
+      },
     },
   },
   'Inter Province': {
@@ -57,6 +77,23 @@ const data = {
           'Forfar 1',
           'Suttieside',
           'Broughty ferry',
+        ],
+      },
+      2025: {
+        teams: [
+          'Caterthun',
+          'Dalhousie',
+          'Dun',
+          'Edzell',
+          'Evenie Water',
+          'Letham Grange',
+          'Forfar 1',
+          'Fotheringham 1',
+
+          'Broughty ferry',
+          'Claverhouse',
+          'Dundee YC',
+          'Lundie & Auchterhouse',
         ],
       },
     },
@@ -83,16 +120,47 @@ const data = {
           'University of Dundee',
         ],
       },
+      2025: {
+        teams: [
+          'AWW',
+          'Banchory',
+          'Caterthun',
+          'Dun',
+          'Edzell',
+          'Evenie Water',
+          'Letham Grange',
+          'Forfar 1',
+          'Fotheringham 1',
+          'Kirriemuir',
+          'Suttieside',
+          'Broughty ferry',
+          'Claverhouse',
+          'Lundie & Auchterhouse',
+          'Pitkerro',
+          'a.n.other',
+        ],
+      },
     },
   },
   'Crichton Tankard (N)': {
     years: {
       2024: { teams: ['AWW', 'Caterthun', 'Evenie Water', 'Letham Grange'] },
+      2025: { teams: ['AWW', 'Caterthun', 'Evenie Water', 'Letham Grange'] },
     },
   },
   'Crichton Tankard (Angus)': {
     years: {
       2024: {
+        teams: [
+          'Forfar 1',
+          'Forfar 2',
+          'Fotheringham 1',
+          'Fotheringham 2',
+          'Kirriemuir',
+          'Suttieside',
+        ],
+      },
+      2025: {
         teams: [
           'Forfar 1',
           'Forfar 2',
@@ -113,6 +181,16 @@ const data = {
           'Dundee',
           'Lundie & Auchterhouse',
           'Pitkerro',
+          'University of Dundee',
+        ],
+      },
+      2025: {
+        teams: [
+          'Balruddery',
+          'Claverhouse',
+          'Dundee',
+          'Lundie & Auchterhouse',
+
           'University of Dundee',
         ],
       },
@@ -143,7 +221,7 @@ class Shuffle extends LitElement {
   @state() accessor currentTeams = [];
 
   @state() accessor currentCompetition = 'Indoor Bonspiel';
-  @state() accessor currentYear = '2024';
+  @state() accessor currentYear = '2025';
 
   @state() accessor team = '';
 
